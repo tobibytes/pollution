@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Asthma Cases Prediction</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            color: #333;
+        }
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .container {
+            background-color: #f9f9f9;
+            border-radius: 8px;
+            padding: 25px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input, select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+        button {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            font-size: 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 10px;
+        }
+        button:hover {
+            background-color: #2980b9;
+        }
+        .results {
+            margin-top: 30px;
+            display: none;
+        }
+        .result-card {
+            background-color: white;
+            border-radius: 6px;
+            padding: 15px;
+            margin-bottom: 15px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .model-name {
+            font-weight: bold;
+            margin-bottom: 5px;
+            color: #2c3e50;
+        }
+        .cases {
+            font-size: 24px;
+            color: #e74c3c;
+        }
+        .error {
+            color: #e74c3c;
+            font-size: 14px;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Asthma Cases Prediction</h1>
+        
+        <div class="form-group">
+            <label for="year">Year:</label>
+            <input type="number" id="year" min="2000" max="2050" value="2023">
+        </div>
+        
+        <div class="form-group">
+            <label for="so2">SO2 Level:</label>
+            <input type="number" id="so2" step="0.01" min="0" value="0.65">
+        </div>
+        
+        <div class="form-group">
+            <label for="pm25">PM2.5 Level (scientific notation):</label>
+            <input type="number" id="pm25" step="any" min="0" value="0.000000055">
+            <div class="note">Example: 5.5e-8 should be entered as 0.000000055</div>
+        </div>
+        
+        <div class="form-group">
+            <label for="hospital">Hospital:</label>
+            <select id="hospital">
+                <option value="">Unknown/New Hospital</option>
+                <option value="0">Hospital 0</option>
+                <option value="1">Hospital 1</option>
+                <option value="2">Hospital 2</option>
+                <option value="3">Hospital 3</option>
+                <option value="4">OAUTHC IFE</option>
+                <option value="5">Hospital 5</option>
+                <option value="6">Hospital 6</option>
+                <option value="7">Hospital 7</option>
+                <option value="8">Hospital 8</option>
+                <option value="9">Hospital 9</option>
+                <option value="10">Hospital 10</option>
+                <option value="11">Hospital 11</option>
+            </select>
+        </div>
+        
+        <button id="predict-btn">Predict Asthma Cases</button>
+        
+        <div id="results" class="results">
+            <h2>Predicted Asthma Cases:</h2>
+            
+            <div class="result-card">
+                <div class="model-name">Neural Network</div>
+                <div id="nn-result" class="cases">...</div>
+            </div>
+            
+            <div class="result-card">
+                <div class="model-name">Linear Regression</div>
+                <div id="lr-result" class="cases">...</div>
+            </div>
+            
+            <div class="result-card">
+                <div class="model-name">Random Forest</div>
+                <div id="rf-result" class="cases">...</div>
+            </div>
+            
+            <div class="result-card">
+                <div class="model-name">Gradient Boosting</div>
+                <div id="gb-result" class="cases">...</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+       document.getElementById('predict-btn').addEventListener('click', function() {
+    // Get input values
+    const year = parseFloat(document.getElementById('year').value);
+    const so2 = parseFloat(document.getElementById('so2').value);
+    const pm25 = parseFloat(document.getElementById('pm25').value);
+    const hospital = document.getElementById('hospital').value;
+    
+    // Validate inputs
+    if (isNaN(year) || isNaN(so2) || isNaN(pm25)) {
+        alert('Please enter valid numeric values for all fields');
+        return;
+    }
+    
+    // Show loading state
+    document.getElementById('nn-result').textContent = "Loading...";
+    document.getElementById('lr-result').textContent = "Loading...";
+    document.getElementById('rf-result').textContent = "Loading...";
+    document.getElementById('gb-result').textContent = "Loading...";
+    document.getElementById('results').style.display = 'block';
+    
+    // Call API
+    fetch('http://localhost:5000/predict', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            year: year,
+            so2: so2,
+            pm25: pm25,
+            hospital: hospital
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Update results
+            document.getElementById('nn-result').textContent = data.predictions['Neural Network'] + " cases";
+            document.getElementById('lr-result').textContent = data.predictions['Linear Regression'] + " cases";
+            document.getElementById('rf-result').textContent = data.predictions['Random Forest'] + " cases";
+            document.getElementById('gb-result').textContent = data.predictions['Gradient Boosting'] + " cases";
+        } else {
+            alert('Error: ' + data.error);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Failed to get prediction. Check the console for details.');
+    });
+});
+    </script>
+</body>
+</html>
